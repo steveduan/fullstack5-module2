@@ -1,58 +1,76 @@
 (function () {
 'use strict';
 
-angular.module('ShoppingListApp', [])
-.controller('ShoppingListAddController', ShoppingListAddController)
-.controller('ShoppingListShowController', ShoppingListShowController)
-.service('ShoppingListService', ShoppingListService);
+angular.module('ShoppingListCheckOff', [])
+.controller('ToBuyController', ToBuyController)
+.controller('AlreadyBoughtController', AlreadyBoughtController)
+.service('ShoppingListCheckOffService', ShoppingListCheckOffService);
 
-ShoppingListAddController.$inject = ['ShoppingListService'];
-function ShoppingListAddController(ShoppingListService) {
-  var itemAdder = this;
-  console.log(itemAdder);
-
-  itemAdder.itemName = "";
-  itemAdder.itemQuantity = "";
-
-  itemAdder.addItem = function () {
-    ShoppingListService.addItem(itemAdder.itemName, itemAdder.itemQuantity);
-  }
-}
-
-
-ShoppingListShowController.$inject = ['ShoppingListService'];
-function ShoppingListShowController(ShoppingListService) {
-  var showList = this;
-
-  showList.items = ShoppingListService.getItems();
-
-  showList.removeItem = function (itemIndex) {
-    ShoppingListService.removeItem(itemIndex);
+ToBuyController.$inject = ['ShoppingListCheckOffService'];
+function ToBuyController(ShoppingListCheckOffService) {
+  var tobuy=this;
+  tobuy.toBuyList = ShoppingListCheckOffService.getItemsToBuy();
+  tobuy.buyIt=function (inx){
+    try{
+        ShoppingListCheckOffService.removeItem(inx);
+    }catch(error){
+      tobuy.errorMsg="Everything is bought!";
+    };
   };
+};
+
+
+AlreadyBoughtController.$inject = ['ShoppingListCheckOffService'];
+function AlreadyBoughtController(ShoppingListCheckOffService) {
+  var bought = this;
+
+  bought.boughtList =  function(){
+    
+    var boughtItems=ShoppingListCheckOffService.getItemsBought();
+    //check the length of the bought list, if there is at least one
+    // element in bought list , we let the errorMsg defined!
+      if(boughtItems.length <=0){
+        bought.errorMsg="Nothing bought yet.";
+      }else{
+        bought.errorMsg=undefined;
+      }
+    return boughtItems;
+  }
+  
+ 
 }
 
 
-function ShoppingListService() {
+function ShoppingListCheckOffService() {
   var service = this;
 
   // List of shopping items
-  var items = [];
-
-  service.addItem = function (itemName, quantity) {
-    var item = {
-      name: itemName,
-      quantity: quantity
-    };
-    items.push(item);
-  };
-
+  var toBuyItems = [{name:"cookies",quantity:10},
+                    {name:"bismol",quantity:20},
+                    {name:"cokes",quantity:12},
+                    {name:"chips",quantity:11},
+                    {name:"burgers",quantity:7},
+                    {name:"fishes",quantity:2},
+                    {name:"cakes",quantity:5}
+                   ];
+  var boughtItems = [];
+  
   service.removeItem = function (itemIndex) {
-    items.splice(itemIndex, 1);
+     var p=toBuyItems.pop(itemIndex);
+     boughtItems.push(p);
+     if(toBuyItems.length<=0){
+       throw new Error("There is no more items!");
+     };
   };
 
-  service.getItems = function () {
-    return items;
+  service.getItemsToBuy = function () {
+    return toBuyItems;
   };
+
+  service.getItemsBought = function () {
+    return boughtItems;
+  }
+  
 }
 
 })();
